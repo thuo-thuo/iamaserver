@@ -5,4 +5,8 @@ which exposed the service via HTTP and deployed the image to ECR respectively.
 
 2. Wrote the Dockerfile.
 
-3. Modified the GitHub Actions workflow files.  
+3. Modified the GitHub Actions test and deployment workflow files.
+
+4. Added sonarqube scanner to unit tests and logic to run tests
+
+

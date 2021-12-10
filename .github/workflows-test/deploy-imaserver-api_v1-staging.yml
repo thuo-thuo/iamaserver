@@ -1,9 +1,9 @@
-name: Deploy iamaserver
+name: api_v1-staging-imaserver-deploy
 
 on:
   push:
     branches:
-      - master
+      - api_v1-staging
 
 env:
   DOCKER_IMAGE: docker_image
@@ -39,10 +39,18 @@ jobs:
 
         #config aws
       - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
         #login to ecr
       - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
+ 
         #do the ting ey
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -50,10 +58,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: imaserver
           IMAGE_TAG: staging
-
+        run: | 
+          docker build -f Dockerfile --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${SERVICE_NAME}:latest .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY:}:${IMAGE_TAG}
       #setup kubeconfig
       - name: Setup kubeconfig
         id: setup-kubeconfig
+        run: | 
+            aws sts get-caller-identity
+            aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
 
       #push
       - name: Deploy k8s yaml
@@ -62,9 +75,11 @@ jobs:
           K8S_YAML_DIR: ./
           IMAGE_NAME: ${{ steps.build-image.outputs.image }}
         run: |
-          # Verify deployment
-
-          # List Public IP of cluster
+            kubectl apply -f deployments/imaserver_deployment.yaml
+            kubectl apply -f deployments/-service.yaml
+            kubectl set image deployment/iamaserver ${IMAGE_NAME}
+            kubectl rollout status deployments ${IMAGE_NAME}
+            kubectl get svc
 
       #notify on slack success or failure
       - uses: 8398a7/action-slack@v3

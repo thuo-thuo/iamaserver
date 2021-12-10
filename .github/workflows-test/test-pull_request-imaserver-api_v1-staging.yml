@@ -26,11 +26,11 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # required
         if: always() # Pick up events even if the job fails or is canceled..
 
-        #run automated unit tests and sonarcloud scan test
-        #
-        #
-        #
-        #
+      - name: run automated unit tests and sonarcloud scan test
+        run: |
+            yarn run jest --watchAll --no-cache --passWithNoTests
+            sonar-scanner -Dsonar.projectKey=fingoafrica_imaserver -Dsonar.sources=src
+            
 
       #notify on slack success or failure
       - uses: 8398a7/action-slack@v3

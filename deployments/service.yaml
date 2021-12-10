@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iamaserver
+  labels:
+    app: iamaserver
+spec:
+  selector:
+    app: iamaserver
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000

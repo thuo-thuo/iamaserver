@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iamaserver
+  namespace: default
+  labels:
+    app: iamaserver
+spec:
+  #Run one instance of our application
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iamaserver
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: iamaserver
+    spec:
+      #Container details
+      containers:
+        - name: iamaserver
+          image: # To be updated in ECR
+          imagePullPolicy: Always
+
+          #Ports to expose
+          ports:
+            - containerPort: 3000
+
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: "0.5"
+            limits:
+              memory: 1Gi
+              cpu: "1"  
+
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+
+

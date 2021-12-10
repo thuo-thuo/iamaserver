@@ -1,0 +1,84 @@
+name: api_v1-staging-imaserver-deploy
+
+on:
+  push:
+    branches:
+      - api_v1-staging
+
+env:
+  DOCKER_IMAGE: docker_image
+  DOCKER_TAG: latest
+  K8S_NAMESPACE: default
+  K8S_DEPLOYMENT: default
+  AWS_REGION: eu-west-2
+  EKS_CLUSTER_NAME: api-v1-staging-eks
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      #Notify on slack that build has started.
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took # selectable (default: repo,message)
+          custom_payload: |
+            {
+              attachments: [{
+                color: '#FF8C00',
+                text: `${process.env.AS_WORKFLOW}\n${process.env.AS_JOB} (${process.env.AS_COMMIT}) of ${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK} / build started ⚙️`,
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # optional
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # required
+        if: always() # Pick up events even if the job fails or is canceled..
+
+        # get code
+      - uses: actions/checkout@v2
+
+        #config aws
+      - name: Configure AWS credentials
+
+        #login to ecr
+      - name: Login to Amazon ECR
+
+        #do the ting ey
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: imaserver
+          IMAGE_TAG: staging
+
+      #setup kubeconfig
+      - name: Setup kubeconfig
+        id: setup-kubeconfig
+
+      #push
+      - name: Deploy k8s yaml
+        id: deploy-k8s-yaml
+        env:
+          K8S_YAML_DIR: ./
+          IMAGE_NAME: ${{ steps.build-image.outputs.image }}
+        run: |
+          # Verify deployment
+
+          # List Public IP of cluster
+
+      #notify on slack success or failure
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took # selectable (default: repo,message)
+          custom_payload: |
+            {
+            attachments: [{
+              color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+              text: `${process.env.AS_WORKFLOW}\n${process.env.AS_JOB} (${process.env.AS_COMMIT}) of ${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+            }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # optional
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} # required
+        if: always() # Pick up events even if the job fails or is canceled.

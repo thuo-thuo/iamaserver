@@ -75,8 +75,8 @@ jobs:
           K8S_YAML_DIR: ./
           IMAGE_NAME: ${{ steps.build-image.outputs.image }}
         run: |
-            kubectl apply -f deployments/imaserver_deployment.yaml
-            kubectl apply -f deployments/-service.yaml
+            kubectl apply -f deployments/iamaserver_deployment.yaml
+            kubectl apply -f deployments/service.yaml
             kubectl set image deployment/iamaserver ${IMAGE_NAME}
             kubectl rollout status deployments ${IMAGE_NAME}
             kubectl get svc

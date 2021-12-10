@@ -1,9 +1,9 @@
-name: api_v1-staging-imaserver-deploy
+name: Deploy iamaserver
 
 on:
   push:
     branches:
-      - api_v1-staging
+      - master
 
 env:
   DOCKER_IMAGE: docker_image
